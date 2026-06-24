@@ -1,11 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>📊 Огляд</h1>
+<h1>Огляд</h1>
 
 <div class="grid">
     <div class="card">
-        <div class="stat">${{ "%.2f"|format(monthly_total) }}</div>
-        <div class="stat-label">Місячні витрати (активні підписки)</div>
+        <div class="stat">
+            {% if monthly_totals %}
+                {% for currency, total in monthly_totals.items() %}
+                    {{ "%.2f"|format(total) }} {{ currency }}{% if not loop.last %} | {% endif %}
+                {% endfor %}
+            {% else %}
+                0.00
+            {% endif %}
+        </div>
+        <div class="stat-label">Місячні витрати по валютах</div>
     </div>
     <div class="card">
         <div class="stat">{{ subscriptions|length }}</div>
@@ -17,10 +25,9 @@
     </div>
 </div>
 
-<!-- Upcoming charges -->
 {% if upcoming %}
 <div class="card" style="margin-top:24px;">
-    <h2>🔔 Найближчі списання</h2>
+    <h2>Найближчі списання</h2>
     <table>
         <thead><tr><th>Сервіс</th><th>Сума</th><th>Дата</th><th>Частота</th></tr></thead>
         <tbody>
@@ -37,9 +44,8 @@
 </div>
 {% endif %}
 
-<!-- Provider Statuses -->
 <div class="card" style="margin-top:16px;">
-    <h2>📡 Статус провайдерів</h2>
+    <h2>Статус провайдерів</h2>
     <div class="grid" style="margin-top:12px;">
     {% for p in providers %}
     <div class="card" style="background:#0f172a;">
@@ -54,10 +60,10 @@
             {% endif %}
         </div>
         {% if p.balance is not none %}
-        <div style="margin-top:8px;font-size:1.2rem;">${{ "%.2f"|format(p.balance) }}</div>
+        <div style="margin-top:8px;font-size:1.2rem;">{{ "%.2f"|format(p.balance) }} {{ p.currency or "USD" }}</div>
         {% endif %}
         {% if p.spent is not none and p.spent > 0 %}
-        <div style="margin-top:4px;font-size:0.85rem;color:#94a3b8;">Витрачено: ${{ "%.2f"|format(p.spent) }}</div>
+        <div style="margin-top:4px;font-size:0.85rem;color:#94a3b8;">Витрачено: {{ "%.2f"|format(p.spent) }} {{ p.currency or "USD" }}</div>
         {% endif %}
         {% if p.limit_used_percent is not none %}
         <div style="margin-top:4px;">
@@ -73,7 +79,7 @@
     </div>
     {% endfor %}
     {% if not providers %}
-    <p style="color:#94a3b8;">Ще немає даних. Налаштуйте .env та перезапустіть.</p>
+    <p style="color:#94a3b8;">Ще немає даних. Налаштуйте `.env` та перезапустіть.</p>
     {% endif %}
     </div>
 </div>

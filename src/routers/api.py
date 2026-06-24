@@ -11,6 +11,7 @@ from ..database import get_db
 from ..models import Subscription, PaymentHistory, ProviderBalance, NotificationLog
 from ..services.provider_poller import poll_all_providers
 from ..services.reminder import run_reminder_check
+from ..services.subscription_utils import deactivate_duplicate_subscriptions, normalize_service_name
 from ..services.telegram_bot import acknowledge_subscription, send_status_message
 from ..config import TELEGRAM_CHAT_ID, N8N_CALLBACK_URL
 import httpx
@@ -47,6 +48,7 @@ class SubscriptionUpdate(BaseModel):
 # ─── Subscriptions CRUD ───────────────────────────────────
 @router.get("/subscriptions")
 def list_subscriptions(db: Session = Depends(get_db)):
+    deactivate_duplicate_subscriptions(db)
     subs = db.query(Subscription).order_by(Subscription.next_payment_date).all()
     return [
         {
@@ -67,7 +69,36 @@ def list_subscriptions(db: Session = Depends(get_db)):
 
 @router.post("/subscriptions")
 def create_subscription(data: SubscriptionCreate, db: Session = Depends(get_db)):
-    sub = Subscription(**data.model_dump())
+    deactivate_duplicate_subscriptions(db)
+    payload = data.model_dump()
+    existing = (
+        db.query(Subscription)
+        .filter(Subscription.is_active == True)
+        .all()
+    )
+    duplicate = next(
+        (
+            sub for sub in existing
+            if normalize_service_name(sub.service_name) == normalize_service_name(payload["service_name"])
+            and round(float(sub.amount), 2) == round(float(payload["amount"]), 2)
+            and (sub.currency or "USD").upper() == (payload["currency"] or "USD").upper()
+            and (sub.frequency or "monthly").casefold() == (payload["frequency"] or "monthly").casefold()
+        ),
+        None,
+    )
+
+    if duplicate:
+        duplicate.last_payment_date = payload["last_payment_date"]
+        duplicate.next_payment_date = payload["next_payment_date"]
+        duplicate.category = payload["category"]
+        duplicate.notes = payload["notes"]
+        duplicate.source = duplicate.source or "manual"
+        duplicate.is_active = True
+        db.commit()
+        db.refresh(duplicate)
+        return {"id": duplicate.id, "status": "updated_existing"}
+
+    sub = Subscription(**payload)
     db.add(sub)
     db.commit()
     db.refresh(sub)

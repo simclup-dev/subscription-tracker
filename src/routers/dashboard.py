@@ -12,6 +12,10 @@ from sqlalchemy.orm import Session
 from ..config import DASHBOARD_TITLE, PUBLIC_BASE_URL
 from ..database import get_db
 from ..models import ProviderBalance, Subscription
+from ..services.subscription_utils import (
+    calculate_monthly_totals_by_currency,
+    deactivate_duplicate_subscriptions,
+)
 
 
 router = APIRouter()
@@ -20,16 +24,11 @@ templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent
 
 @router.get("/", response_class=HTMLResponse)
 def dashboard_home(request: Request, db: Session = Depends(get_db)):
+    deactivate_duplicate_subscriptions(db)
     subs = db.query(Subscription).filter_by(is_active=True).order_by(Subscription.next_payment_date).all()
     providers = db.query(ProviderBalance).all()
 
-    monthly_total = sum(
-        s.amount if s.frequency == "monthly"
-        else s.amount / 3 if s.frequency == "quarterly"
-        else s.amount / 12 if s.frequency == "yearly"
-        else s.amount
-        for s in subs
-    )
+    monthly_totals = calculate_monthly_totals_by_currency(subs)
 
     today = datetime.now(timezone.utc).date()
     week_ahead = today + timedelta(days=7)
@@ -40,7 +39,7 @@ def dashboard_home(request: Request, db: Session = Depends(get_db)):
         "title": DASHBOARD_TITLE,
         "subscriptions": subs,
         "providers": providers,
-        "monthly_total": monthly_total,
+        "monthly_totals": monthly_totals,
         "upcoming": upcoming,
         "now": datetime.now(timezone.utc),
     })
@@ -48,7 +47,8 @@ def dashboard_home(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/subscriptions", response_class=HTMLResponse)
 def subscriptions_page(request: Request, db: Session = Depends(get_db)):
-    subs = db.query(Subscription).order_by(Subscription.next_payment_date).all()
+    deactivate_duplicate_subscriptions(db)
+    subs = db.query(Subscription).filter_by(is_active=True).order_by(Subscription.next_payment_date).all()
     return templates.TemplateResponse("subscriptions.html", {
         "request": request,
         "title": "Subscriptions",
