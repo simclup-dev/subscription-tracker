@@ -23,6 +23,20 @@ already been paid, and which providers are close to their limits.
 - Telegram notifications with inline acknowledgement buttons
 - Real-world glue code for API-based and browser-assisted status collection
 
+## Screenshots
+
+### Overview dashboard
+
+![Overview dashboard](docs/screenshots/01-dashboard.png)
+
+### Provider status
+
+![Provider status](docs/screenshots/02-providers.png)
+
+### Telegram status message
+
+![Telegram status message](docs/screenshots/03-telegram.png)
+
 ## Stack
 
 - Python / FastAPI
