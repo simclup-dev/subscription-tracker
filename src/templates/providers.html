@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;">
+    <h1>📡 Провайдери</h1>
+    <button class="btn btn-primary" onclick="fetch('/api/providers/poll',{method:'POST'}).then(()=>location.reload())">🔄 Оновити зараз</button>
+</div>
+
+{% if providers %}
+<div class="grid" style="margin-top:16px;">
+{% for p in providers %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">
+            {% if p.provider_name == "anthropic" %}🤖 Anthropic
+            {% elif p.provider_name == "google_ai" %}🔵 Google AI
+            {% elif p.provider_name == "ollama" %}🦙 Ollama
+            {% elif p.provider_name == "deepseek" %}🐋 DeepSeek
+            {% else %}{{ p.provider_name }}{% endif %}
+        </h2>
+        {% if p.provider_name == "anthropic" %}
+            {% if p.last_error and "RATE" in p.last_error %}
+                <span class="badge badge-red">⛔ Rate Limited</span>
+            {% elif p.last_checked %}
+                <span class="badge badge-green">✅ OK</span>
+            {% else %}
+                <span class="badge badge-yellow">⏳ Очікує</span>
+            {% endif %}
+        {% elif p.last_error and "bookmarklet" not in p.last_error.lower() and "натисни" not in p.last_error.lower() %}
+            <span class="badge badge-red">⚠️ Помилка</span>
+        {% elif p.last_checked %}
+            <span class="badge badge-green">✅ OK</span>
+        {% else %}
+            <span class="badge badge-yellow">⏳ Очікує</span>
+        {% endif %}
+    </div>
+
+    {# DeepSeek — balance #}
+    {% if p.provider_name == "deepseek" and p.balance is not none %}
+    <div class="stat">${{ "%.2f"|format(p.balance) }}</div>
+    <div class="stat-label">Баланс</div>
+    {% endif %}
+
+    {# Google AI — spent/left #}
+    {% if p.provider_name == "google_ai" %}
+    {% if p.spent is not none and p.spent > 0 %}
+    <div style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.9rem;">
+            <span style="color:#94a3b8;">Витрачено</span>
+            <strong>${{ "%.2f"|format(p.spent) }}</strong>
+        </div>
+        {% set limit = p.limit_total or 12.0 %}
+        {% set pct = [(p.spent / limit * 100), 100]|min %}
+        <div style="background:#334155;border-radius:8px;height:10px;overflow:hidden;">
+            <div style="width:{{ pct }}%;height:100%;background:{% if pct > 80 %}#ef4444{% elif pct > 50 %}#f59e0b{% else %}#22c55e{% endif %};"></div>
+        </div>
+        <div style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">${{ "%.2f"|format([limit - p.spent, 0]|max) }} лишилось з ${{ "%.0f"|format(limit) }}</div>
+    </div>
+    {% else %}
+    <div style="margin-top:8px;font-size:0.85rem;color:#64748b;">
+        <a href="/google-ai" style="color:#38bdf8;">📎 Натисни bookmarklet</a> для оновлення
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {# Ollama — % used #}
+    {% if p.provider_name == "ollama" %}
+    {% if p.limit_used_percent is not none %}
+    <div style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:4px;">
+            <span>Використано</span>
+            <span>{{ "%.1f"|format(p.limit_used_percent) }}%</span>
+        </div>
+        <div style="background:#334155;border-radius:8px;height:10px;overflow:hidden;">
+            <div style="width:{{ p.limit_used_percent }}%;height:100%;background:{% if p.limit_used_percent > 80 %}#ef4444{% elif p.limit_used_percent > 50 %}#f59e0b{% else %}#22c55e{% endif %};"></div>
+        </div>
+    </div>
+    {% endif %}
+    {% if p.last_error and "Cookie" in p.last_error %}
+    <div style="margin-top:8px;font-size:0.8rem;color:#f59e0b;">⚠️ {{ p.last_error }}</div>
+    {% endif %}
+    {% endif %}
+
+    {# Anthropic — plan + rate limit status #}
+    {% if p.provider_name == "anthropic" %}
+    <div style="margin-top:8px;">
+        {% if p.raw_response %}
+        <div style="font-size:1.1rem;font-weight:600;">
+            {% if p.raw_response == "Max" %}👑 Claude Max
+            {% elif p.raw_response == "Pro" %}⭐ Claude Pro
+            {% else %}{{ p.raw_response }}{% endif %}
+        </div>
+        {% endif %}
+        {% if p.last_error and "RATE" in p.last_error %}
+        <div style="margin-top:8px;color:#ef4444;font-size:0.9rem;">⛔ {{ p.last_error }}</div>
+        {% elif not p.last_checked %}
+        <div style="margin-top:8px;font-size:0.85rem;">
+            <a href="/anthropic" style="color:#38bdf8;">📎 Налаштувати bookmarklet</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# Last checked timestamp #}
+    {% if p.last_checked %}
+    <div style="font-size:0.7rem;color:#64748b;margin-top:12px;">
+        Оновлено: {{ p.last_checked.strftime('%d.%m %H:%M') }}
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <p style="color:#94a3b8;">Ще немає даних. Переконайтесь що .env налаштовано правильно та сервіс запущено.</p>
+</div>
+{% endif %}
+
+<div class="card" style="margin-top:24px;">
+    <h2>⚡ Швидкі посилання</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+        <a href="/google-ai" class="btn">🔵 Google AI bookmarklet</a>
+        <a href="/anthropic" class="btn">🤖 Anthropic bookmarklet</a>
+    </div>
+</div>
+{% endblock %}

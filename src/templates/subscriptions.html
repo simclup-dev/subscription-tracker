@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;">
+    <h1>📋 Підписки</h1>
+    <button class="btn btn-primary" onclick="alert('Форма додавання буде тут')">+ Додати</button>
+</div>
+
+{% if subscriptions %}
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Сервіс</th>
+                <th>Сума</th>
+                <th>Частота</th>
+                <th>Наступне списання</th>
+                <th>Статус</th>
+                <th>Джерело</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in subscriptions %}
+        <tr>
+            <td>
+                <strong>{{ s.service_name }}</strong>
+                {% if s.notes %}<br><small style="color:#94a3b8;">{{ s.notes }}</small>{% endif %}
+            </td>
+            <td>{{ "%.2f"|format(s.amount) }} {{ s.currency }}</td>
+            <td>{{ s.frequency }}</td>
+            <td>{{ s.next_payment_date }}</td>
+            <td>
+                {% if s.is_active %}
+                    <span class="badge badge-green">Активна</span>
+                {% else %}
+                    <span class="badge badge-red">Неактивна</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if s.source == 'gmail_scan' %}
+                    <span class="badge badge-blue">Gmail</span>
+                {% else %}
+                    <span class="badge badge-yellow">Вручну</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card">
+    <p style="color:#94a3b8;">Ще немає підписок. Додайте першу вручну або налаштуйте Gmail-сканер у n8n.</p>
+</div>
+{% endif %}
+{% endblock %}

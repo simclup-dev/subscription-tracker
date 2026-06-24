@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:800px;">
+    <h1>Anthropic Bookmarklet</h1>
+
+    <div class="card" style="margin-top:16px;">
+        <h2>How it works</h2>
+        <ol style="line-height:2;padding-left:20px;">
+            <li>Drag the bookmarklet below into your bookmarks bar</li>
+            <li>Open <a href="https://claude.ai" target="_blank" style="color:#38bdf8;">claude.ai</a> and sign in</li>
+            <li>Run the bookmarklet to record plan and rate-limit status</li>
+        </ol>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <h2>Bookmarklet</h2>
+        <a href="javascript:void%20(function(){var%20TRACKER%3D%22{{ public_base_url }}%22;if(!location.href.includes(%22claude.ai%22)){alert(%22Open claude.ai first%22);return;}var%20rateLimited%3Dfalse,resetAt%3D%22%22;var%20bodyText%3Ddocument.body.innerText||%22%22;if(/usage%20limit|rate.limit|reached%20your%20limit/i.test(bodyText)){rateLimited%3Dtrue;var%20resetMatch%3DbodyText.match(/%5B0-2%5D%3F%5Cd%3A%5B0-5%5D%5Cd(%3A%5B0-5%5D%5Cd)%3F(%20%5BAaPpMm%5D%7B2%7D)?/);resetAt%3DresetMatch%3FresetMatch%5B0%5D:%22%22;}fetch(%22/api/organizations%22,{credentials:%22include%22}).then(function(r){return%20r.ok%3Fr.json():{};}).then(function(orgs){var%20plan%3D%22%22;if(orgs&&orgs.length){var%20o%3Dorgs[0];plan%3Do.active_flags?(o.active_flags.includes(%22claude_pro%22)?%22Pro%22:o.active_flags.includes(%22claude_max%22)?%22Max%22:%22Free%22):%22%22}if(!plan){plan=document.title.includes(%22Pro%22)?%22Pro%22:document.title.includes(%22Max%22)?%22Max%22:%22%22;}return%20fetch(TRACKER+%22/api/providers/anthropic/update%22,{method:%22POST%22,headers:{%22Content-Type%22:%22application/json%22},body:JSON.stringify({raw_response:plan||%22Claude.ai%22,is_rate_limited:rateLimited,rate_reset_at:resetAt})});}).then(function(){alert(rateLimited?%22Rate limited status saved%22:%22Anthropic status updated%22);location.reload();}).catch(function(e){alert(%22Error:%20%22+e.message);});})();"
+           style="display:inline-block;padding:14px 28px;background:#7c3aed;color:white;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.05rem;cursor:move;">
+            Anthropic -> Tracker
+        </a>
+    </div>
+
+    <div class="card" style="margin-top:16px;background:#0f172a;">
+        <h2>Current status</h2>
+        <table>
+            <tr>
+                <td style="color:#94a3b8;">Plan:</td>
+                <td><strong>{% if provider and provider.raw_response %}{{ provider.raw_response }}{% else %}-{% endif %}</strong></td>
+            </tr>
+            <tr>
+                <td style="color:#94a3b8;">State:</td>
+                <td>
+                    {% if provider and provider.last_error and "RATE" in provider.last_error %}
+                        <span class="badge badge-red">Rate limited</span>
+                    {% elif provider and provider.last_checked %}
+                        <span class="badge badge-green">OK</span>
+                    {% else %}
+                        <span class="badge badge-yellow">No data yet</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="color:#94a3b8;">Updated:</td>
+                <td style="font-size:0.85rem;color:#64748b;">
+                    {% if provider and provider.last_checked %}
+                        {{ provider.last_checked.strftime('%Y-%m-%d %H:%M:%S') }} UTC
+                    {% else %}
+                        never
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

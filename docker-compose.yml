@@ -1,0 +1,20 @@
+name: subscription-tracker
+services:
+  tracker:
+    build: .
+    container_name: subscription-tracker
+    restart: unless-stopped
+    ports:
+      - "5010:5010"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - DB_PATH=/app/data/tracker.db
+      - DASHBOARD_TITLE=📊 Subscription & API Tracker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5010/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

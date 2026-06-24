@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:800px;">
+    <h1>Google AI Studio Bookmarklet</h1>
+
+    <div class="card" style="margin-top:16px;">
+        <h2>How it works</h2>
+        <ol style="line-height:2;padding-left:20px;">
+            <li>Open <a href="https://aistudio.google.com/spend" target="_blank" style="color:#38bdf8;">aistudio.google.com/spend</a></li>
+            <li>Wait a moment until the page finishes rendering the spend value</li>
+            <li>Click the bookmarklet below</li>
+        </ol>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <h2>Bookmarklet</h2>
+        <a href="javascript:void%20function(){var%20e=document.querySelectorAll(%22*%22),s=%22%22;for(var%20i=0;i%3Ce.length;i++){if(e[i].childNodes.length%3D%3D%3D1%26%26%2F%5E%5C%24%5Cd%2B%5C.%5Cd%7B2%7D%24%2F.test(e[i].textContent.trim())){s%3De[i].textContent.trim();break}}if(!s)return%20alert(%22Could%20not%20find%20spend%20amount%20on%20page.%22);var%20r%3DparseFloat(s.replace(%22%24%22,%22%22));fetch(%22{{ public_base_url }}%2Fapi%2Fproviders%2Fgoogle_ai%2Fupdate%22,{method:%22POST%22,headers:{%22Content-Type%22:%22application%2Fjson%22},body:JSON.stringify({spent:r})}).then(function(){alert(%22Updated:%20$%22%2Br.toFixed(2));location.reload()})}();"
+           style="display:inline-block;padding:14px 28px;background:#22c55e;color:white;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.05rem;cursor:move;">
+            Google AI -> Tracker
+        </a>
+        <p style="color:#94a3b8;margin-top:8px;font-size:0.85rem;">
+            Drag this to your bookmarks bar, then run it on the spend page.
+        </p>
+    </div>
+
+    <div class="card" style="margin-top:16px;background:#0f172a;">
+        <h2>Current status</h2>
+        <table>
+            <tr><td style="color:#94a3b8;">Prepaid:</td><td><strong>$12.00</strong></td></tr>
+            <tr><td style="color:#94a3b8;">Spent:</td><td><strong id="spent-val">-</strong></td></tr>
+            <tr><td style="color:#94a3b8;">Left:</td><td><strong id="left-val">-</strong></td></tr>
+            <tr><td style="color:#94a3b8;">Updated:</td><td id="checked-at" style="font-size:0.85rem;color:#64748b;">-</td></tr>
+        </table>
+    </div>
+</div>
+
+<script>
+fetch('/api/providers')
+  .then(r => r.json())
+  .then(data => {
+    const g = data.find(p => p.provider_name === 'google_ai');
+    if (g) {
+      const spent = g.spent || 0;
+      const left = Math.max(0, 12 - spent);
+      document.getElementById('spent-val').textContent = '$' + spent.toFixed(2);
+      document.getElementById('left-val').textContent = '$' + left.toFixed(2);
+      document.getElementById('left-val').style.color = left < 1 ? '#ef4444' : '#22c55e';
+      document.getElementById('checked-at').textContent = g.last_checked || 'never';
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+        nav { background: #1e293b; border-bottom: 1px solid #334155; padding: 0 24px; display: flex; align-items: center; gap: 24px; height: 56px; flex-wrap: wrap; }
+        nav a { color: #94a3b8; text-decoration: none; font-size: 0.9rem; transition: color .2s; }
+        nav a:hover, nav a.active { color: #38bdf8; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        h1 { font-size: 1.8rem; margin-bottom: 24px; color: #f1f5f9; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .card h2 { font-size: 1.2rem; color: #38bdf8; margin-bottom: 12px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-green { background: #065f46; color: #6ee7b7; }
+        .badge-yellow { background: #713f12; color: #fde68a; }
+        .badge-red { background: #7f1d1d; color: #fca5a5; }
+        .badge-blue { background: #1e3a5f; color: #93c5fd; }
+        .stat { font-size: 2rem; font-weight: 700; }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+        .btn { display: inline-block; padding: 8px 16px; border-radius: 8px; border: 1px solid #475569; background: #334155; color: #e2e8f0; cursor: pointer; font-size: 0.85rem; text-decoration: none; transition: background .2s; }
+        .btn:hover { background: #475569; }
+        .btn-primary { background: #1d4ed8; border-color: #2563eb; }
+        .btn-primary:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <nav>
+        <span style="color:#38bdf8;font-weight:700;font-size:1.1rem;">📊 Tracker</span>
+        <a href="/" class="{{ 'active' if request.url.path == '/' }}">Огляд</a>
+        <a href="/subscriptions" class="{{ 'active' if request.url.path == '/subscriptions' }}">Підписки</a>
+        <a href="/providers" class="{{ 'active' if request.url.path == '/providers' }}">Провайдери</a>
+        <a href="/google-ai" class="{{ 'active' if request.url.path == '/google-ai' }}">Google AI</a>
+        <a href="/anthropic" class="{{ 'active' if request.url.path == '/anthropic' }}">Anthropic</a>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
