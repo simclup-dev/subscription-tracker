@@ -1,13 +1,19 @@
 # Subscription Tracker
 
-`Subscription Tracker` is a small FastAPI app for watching recurring software
-spend and AI provider balances in one place.
+`Subscription Tracker` is a self-hosted FastAPI app for keeping recurring
+software costs, renewal dates, and AI provider balances in one place.
 
-It combines a dashboard, background polling jobs, Telegram reminders, and a few
-manual update flows for providers that do not expose a clean API. The project is
-practical rather than theoretical: it tracks upcoming charges, stores payment
-history, and keeps a lightweight status surface for services like DeepSeek,
-Google AI, Anthropic, and Ollama.
+It combines a small dashboard, background polling jobs, Telegram reminders, and
+manual update flows for providers that do not expose a clean API. The goal is
+simple: keep a clear operational view of what is about to renew, what has
+already been paid, and which providers are close to their limits.
+
+## What it does
+
+- tracks subscriptions, renewal dates, and payment history
+- polls supported providers for balance or usage status
+- sends Telegram updates and acknowledgement flows
+- keeps the interface lightweight enough to run as a small self-hosted service
 
 ## What this project shows
 
@@ -26,7 +32,7 @@ Google AI, Anthropic, and Ollama.
 - SQLite
 - Docker / Docker Compose
 
-## Setup
+## Running locally
 
 1. Copy the example environment file:
 
@@ -54,7 +60,7 @@ Or start it with Docker:
 docker compose up --build
 ```
 
-## Environment
+## Environment notes
 
 - `DB_PATH`: SQLite database path
 - `DEEPSEEK_API_KEY`, `GOOGLE_API_KEY`: provider API access
@@ -63,7 +69,7 @@ docker compose up --build
 - `N8N_CALLBACK_URL`: optional callback forwarder for shared Telegram button flows
 - `PUBLIC_BASE_URL`: base URL used by public bookmarklet-style flows
 
-## Repo notes
+## Public repo notes
 
 This public version excludes live credentials, runtime databases, backup files,
 and exported workflow data from the production system. It is intended to show the
